@@ -3,6 +3,14 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
+def draw_plot(data):
+    plt.xlabel('Epoch')
+    plt.ylabel('Нарийвчлал')
+    plt.plot(data[:, 0], data[:, 1])
+    plt.show()
+    plt.pause(0.01)
+    plt.gcf().clear()
+
 mnist  = input_data.read_data_sets("/tmp/tensorflow/mnist/input_data", one_hot=True)
 train_x, train_y, test_x, test_y = mnist.train.images, mnist.train.labels, mnist.test.images, mnist.test.labels
 
@@ -75,6 +83,9 @@ loss       = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, la
 train_op   = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 predict_op = tf.argmax(y, 1)
 
+plt.ion()
+history = []
+
 with tf.Session() as sess:
     tf.global_variables_initializer().run()
     for i in range(epochs):
@@ -109,4 +120,6 @@ with tf.Session() as sess:
                     }
                 )
             )
+        history.append((i, accuracy*100.0))
+        draw_plot(np.asarray(history))
         print("epoch : %d, accuracy : %f,"%(i, accuracy*100.0))
