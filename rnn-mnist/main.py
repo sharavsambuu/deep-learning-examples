@@ -28,6 +28,7 @@ y = tf.placeholder("float", [None, n_classes])
 
 # оролтын зурагны хэлбэрийг тодорхойлсон [batch_size, n_steps, n_input] хэлбэрийн тензорыг
 # time_steps ширхэг [batch_size, n_input] хэлбэртэй тензорууд болгож хөрвүүлэх
+# ингэснээр static RNN-лүү feed хийх боломжтой болно.
 input = tf.unstack(x, time_steps, 1)
 
 # рекуррэнт неорон сүлжээг тодорхойлох
