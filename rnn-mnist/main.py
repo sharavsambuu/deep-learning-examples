@@ -15,7 +15,7 @@ learning_rate = 0.001
 # mnist-ийн классуудын тоо
 n_classes = 10
 # batch хэмжээ
-batch_size = 128
+batch_size = 256
 
 # weight, bias
 out_weights = tf.Variable(tf.random_normal([num_units, n_classes]))
