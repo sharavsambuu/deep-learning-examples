@@ -26,8 +26,8 @@ x = tf.placeholder("float", [None, time_steps, n_input])
 # label-д зориулагдсан placeholder
 y = tf.placeholder("float", [None, n_classes])
 
-# оролтын тензорыг [batch_size, n_steps, n_input]
-# хэлбэрээс [batch_size, n_input]-н time_steps тензорууд болгож хөрвүүлэх
+# оролтын зурагны хэлбэрийг тодорхойлсон [batch_size, n_steps, n_input] хэлбэрийн тензорыг
+# time_steps ширхэг [batch_size, n_input] хэлбэртэй тензорууд болгож хөрвүүлэх
 input = tf.unstack(x, time_steps, 1)
 
 # рекуррэнт неорон сүлжээг тодорхойлох
