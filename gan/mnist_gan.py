@@ -164,3 +164,5 @@ with tf.Session() as sess:
 # Save training generator samples
 with open('train_samples.pkl', 'wb') as f:
     pkl.dump(samples, f)
+
+
