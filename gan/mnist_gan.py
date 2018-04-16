@@ -7,6 +7,15 @@ import pickle as pkl
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from matplotlib import animation
+import argparse
+import sys
+import time
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--show', help='foo help')
+args = parser.parse_args()
+
 
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('MNIST_data')
@@ -81,7 +90,6 @@ alpha = 0.01
 # Label smoothing 
 smooth = 0.1
 
-
 tf.reset_default_graph()
 # Create our input placeholders
 input_real, input_z = model_inputs(input_size, z_size)
@@ -119,6 +127,28 @@ d_vars = [var for var in t_vars if var.name.startswith("discriminator")]
 
 d_train_opt = tf.train.AdamOptimizer().minimize(d_loss, var_list=d_vars)
 g_train_opt = tf.train.AdamOptimizer().minimize(g_loss, var_list=g_vars)
+
+
+def view_samples(epoch, samples):
+    fig, axes = plt.subplots(figsize=(7,7), nrows=4, ncols=4, sharey=True, sharex=True)
+    for ax, img in zip(axes.flatten(), samples[epoch][0]):
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        im = ax.imshow(img.reshape((28,28)), cmap='Greys_r')
+    return fig, axes
+    
+if args.show:
+	saver = tf.train.Saver(var_list=g_vars)
+	with tf.Session() as sess:
+	    saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
+	    for i in range(3):
+	        sample_z = np.random.uniform(-1, 1, size=(16, z_size))
+	        gen_samples = sess.run(
+	                   generator(input_z, input_size, reuse=True),
+	                   feed_dict={input_z: sample_z})
+	        _ = view_samples(0, [gen_samples])
+	        plt.show()
+	sys.exit()
 
 
 batch_size = 100
