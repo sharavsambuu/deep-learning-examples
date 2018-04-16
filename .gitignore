@@ -108,3 +108,4 @@ venv.bak/
 
 gan/MNIST_data
 gan/checkpoints
+gan/train_samples.pkl
