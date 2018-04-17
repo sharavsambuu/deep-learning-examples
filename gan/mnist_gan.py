@@ -25,85 +25,62 @@ def model_inputs(real_dim, z_dim):
     inputs_z = tf.placeholder(tf.float32, (None, z_dim), name="inputs_z")
     return inputs_real, inputs_z
 
-def generator(z, out_dim, n_units=128, reuse=False,  alpha=0.01):
-    ''' Build the generator network.
-    
-        Arguments
-        ---------
-        z : Input tensor for the generator
-        out_dim : Shape of the generator output
-        n_units : Number of units in hidden layer
-        reuse : Reuse the variables with tf.variable_scope
-        alpha : leak parameter for leaky ReLU
-        
-        Returns
-        -------
-        out, logits: 
-    '''
+def generator(
+    z,           # generator-т авах оролтын тензор
+    out_dim,     # generator-ийн гаралтын утгын хэлбэр
+    n_units=128, # далд давхарга дахь нуугдмал юнитуудын тоо
+    reuse=False, # tf.variable_scope доторхи хувьсагчийг дахин хэрэглэх эсэх
+    alpha=0.01   # leaky ReLU-ийн авах утга
+    ):
     with tf.variable_scope('generator', reuse=reuse):
-        # Hidden layer
+        # Далд давхарга
         h1 = tf.layers.dense(z, n_units, activation=None)
         # Leaky ReLU
-        h1 = tf.maximum(h1, alpha*h1)
-        
-        # Logits and tanh output
+        h1 = tf.maximum(h1, alpha*h1) 
+        # Logit болон tanh гаралт
         logits = tf.layers.dense(h1, out_dim, activation=None)
         out = tf.nn.tanh(logits)
-        
         return out, logits
 
-
-def discriminator(x, n_units=128, reuse=False, alpha=0.01):
-    ''' Build the discriminator network.
-    
-        Arguments
-        ---------
-        x : Input tensor for the discriminator
-        n_units: Number of units in hidden layer
-        reuse : Reuse the variables with tf.variable_scope
-        alpha : leak parameter for leaky ReLU
-        
-        Returns
-        -------
-        out, logits: 
-    '''
+def discriminator(
+    x,           # disriminator-т авах оролтын тензор
+    n_units=128, # далд давхаргын юнитуудын тоо
+    reuse=False, # дахин хэрэглэх эсэх
+    alpha=0.01   # leaky ReLU-д авах утга
+    ):
     with tf.variable_scope('discriminator', reuse=reuse):
-        # Hidden layer
+        # Далд давхарга
         h1 = tf.layers.dense(x, n_units, activation=None)
         # Leaky ReLU
         h1 = tf.maximum(h1, alpha*h1)
-        
+        # Logit-ууд болон sigmoid
         logits = tf.layers.dense(h1, 1, activation=None)
         out = tf.nn.sigmoid(logits)
-        
         return out, logits
 
-# Size of input image to discriminator
-input_size    = 784 # 28x28 MNIST images flattened
-# Size of latent vector to generator
-z_size        = 100
-# Sizes of hidden layers in generator and discriminator
-g_hidden_size = 128
-d_hidden_size = 128
-# Leak factor for leaky ReLU
-alpha         = 0.01
-# Label smoothing 
-smooth        = 0.1
+# discriminator-т орж ирэх оролтын зургийн хэмжээ
+input_size    = 784  # 28x28 хэмжээтэй MNIST зургийг нэг мөрөнд оруулсан байдал
+z_size        = 100  # generator-т орж ирэх latent векторын хэмжээ
+g_hidden_size = 128  # generator доторхи далд давхаргуудын хэмжээ
+d_hidden_size = 128  # discriminator доторхи далд давхаргуудын хэмжээ
+alpha         = 0.01 # Leak factor for leaky ReLU
+smooth        = 0.1  # Label smoothing 
 
 tf.reset_default_graph()
-# Create our input placeholders
+# Графын оролтын laceholder-ууд
 input_real, input_z = model_inputs(input_size, z_size)
 
-# Generator network here
+# Generator сүлжээ
+# g_model нь generator-ийн гаралт
 g_model, g_logits   = generator(input_z, input_size, g_hidden_size, reuse=False,  alpha=alpha)
-# g_model is the generator output
 
-# Disriminator network here
+
+# Disriminator сүлжээ
 d_model_real, d_logits_real = discriminator(input_real, d_hidden_size, reuse=False, alpha=alpha)
 d_model_fake, d_logits_fake = discriminator(g_model, d_hidden_size, reuse=True, alpha=alpha)
 
 
-# Calculate losses
+# loss-ууд тооцох
 d_labels_real = tf.ones_like(d_logits_real) * (1 - smooth)
 d_labels_fake = tf.zeros_like(d_logits_fake)
 
@@ -117,10 +94,10 @@ g_loss = tf.reduce_mean(
         labels=tf.ones_like(d_logits_fake), 
         logits=d_logits_fake))
 
-# Optimizers
+# Optimizer
 learning_rate = 0.002
 
-# Get the trainable_variables, split into G and D parts
+# Хувьсагчдыг trainable_variables-ээс аваад G болон D хэсгүүдэд хувааж авах
 t_vars = tf.trainable_variables()
 g_vars = [var for var in t_vars if var.name.startswith("generator")]
 d_vars = [var for var in t_vars if var.name.startswith("discriminator")]
@@ -152,38 +129,39 @@ if args.show:
 
 
 batch_size = 100
-epochs = 500
-samples = []
-losses = []
-saver = tf.train.Saver(var_list = g_vars)
+epochs     = 500
+samples    = []
+losses     = []
+saver      = tf.train.Saver(var_list = g_vars)
+
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for e in range(epochs):
         for ii in range(mnist.train.num_examples//batch_size):
             batch        = mnist.train.next_batch(batch_size)
             
-            # Get images, reshape and rescale to pass to D
+            # Зурагнууд аваад reshape rescale хийгээд D рүү дамжуулах
             batch_images = batch[0].reshape((batch_size, 784))
             batch_images = batch_images*2 - 1
             
-            # Sample random noise for G
+            # G-д зориулж random noise дээжлэн авах
             batch_z = np.random.uniform(-1, 1, size=(batch_size, z_size))
             
-            # Run optimizers
+            # optimizer-уудыг ажиллуулах
             _ = sess.run(d_train_opt, feed_dict={input_real: batch_images, input_z: batch_z})
             _ = sess.run(g_train_opt, feed_dict={input_z: batch_z})
         
-        # At the end of each epoch, get the losses and print them out
+        # epoch болгоны дараа loss утгуудыг авч хэвлэж харах
         train_loss_d = sess.run(d_loss, {input_z: batch_z, input_real: batch_images})
         train_loss_g = g_loss.eval({input_z: batch_z})
             
         print("Epoch {}/{}...".format(e+1, epochs),
               "Discriminator Loss: {:.4f}...".format(train_loss_d),
               "Generator Loss: {:.4f}".format(train_loss_g))    
-        # Save losses to view after training
+        # Сургасны дараа харах зорилгоор loss-уудыг хадгалж авах
         losses.append((train_loss_d, train_loss_g))
         
-        # Sample from generator as we're training for viewing afterwards
+        # Сургасны дараа хадгалах зорилгоор generator-оос дээж авч хадгалах 
         sample_z = np.random.uniform(-1, 1, size=(16, z_size))
         gen_samples = sess.run(
                        generator(input_z, input_size, reuse=True),
@@ -191,7 +169,7 @@ with tf.Session() as sess:
         samples.append(gen_samples)
         saver.save(sess, './checkpoints/generator.ckpt')
 
-# Save training generator samples
+# Сургалтаар үүсгэсэн дээжүүийг хадгалж авах
 with open('train_samples.pkl', 'wb') as f:
     pkl.dump(samples, f)
 
