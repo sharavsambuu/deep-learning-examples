@@ -11,7 +11,7 @@ def view_samples(epoch, samples):
         im = ax.imshow(img.reshape((28,28)), cmap='Greys_r')
     return fig, axes
 
-# Load samples from generator taken while training
+# Сургалтаар үүсгэж авсан дээжүүдийг ачаалж авах
 with open('train_samples.pkl', 'rb') as f:
     samples = pkl.load(f)
 
