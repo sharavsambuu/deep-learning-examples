@@ -79,23 +79,23 @@ def discriminator(x, n_units=128, reuse=False, alpha=0.01):
         return out, logits
 
 # Size of input image to discriminator
-input_size = 784 # 28x28 MNIST images flattened
+input_size    = 784 # 28x28 MNIST images flattened
 # Size of latent vector to generator
-z_size = 100
+z_size        = 100
 # Sizes of hidden layers in generator and discriminator
 g_hidden_size = 128
 d_hidden_size = 128
 # Leak factor for leaky ReLU
-alpha = 0.01
+alpha         = 0.01
 # Label smoothing 
-smooth = 0.1
+smooth        = 0.1
 
 tf.reset_default_graph()
 # Create our input placeholders
 input_real, input_z = model_inputs(input_size, z_size)
 
 # Generator network here
-g_model, g_logits = generator(input_z, input_size, g_hidden_size, reuse=False,  alpha=alpha)
+g_model, g_logits   = generator(input_z, input_size, g_hidden_size, reuse=False,  alpha=alpha)
 # g_model is the generator output
 
 # Disriminator network here
@@ -152,7 +152,7 @@ if args.show:
 
 
 batch_size = 100
-epochs = 100
+epochs = 500
 samples = []
 losses = []
 saver = tf.train.Saver(var_list = g_vars)
@@ -160,7 +160,7 @@ with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for e in range(epochs):
         for ii in range(mnist.train.num_examples//batch_size):
-            batch = mnist.train.next_batch(batch_size)
+            batch        = mnist.train.next_batch(batch_size)
             
             # Get images, reshape and rescale to pass to D
             batch_images = batch[0].reshape((batch_size, 784))
