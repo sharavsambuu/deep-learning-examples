@@ -232,8 +232,8 @@ with tf.Session() as sess:
                             reuse=True
                         ),
                         feed_dict={
-                            input_z: sample_z,
-
+                            input_z : sample_z,
+                            input_y : condition_y
                         }
                     )
         samples.append(gen_samples)
