@@ -2,6 +2,8 @@
 CGAN, Conditional Generative Adversarial Network
 MNIST шиг харагддаг зурагнуудыг үүсгэж сургах, гэхдээ нэмэлтээр label авах
 тухайн label-тэй тохирох зурагнуудыг үүсгэж сургах
+Ашигласан холбоос :
+    - https://wiseodd.github.io/techblog/2016/12/24/conditional-gan-tensorflow/
 """
 
 import argparse
