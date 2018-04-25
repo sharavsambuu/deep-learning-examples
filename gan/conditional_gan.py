@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 
 from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets('MNIST_data')
+mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
 def model_inputs(real_dim, z_dim, y_dim):
     inputs_real = tf.placeholder(tf.float32, (None, real_dim), name="inputs_real") # real input
@@ -37,7 +37,7 @@ def generator(
     ):
     with tf.variable_scope('generator', reuse=reuse):
         # latent тензор болон condition хоёрыг нэгтгэж нэг тензор болгох
-        inputs = tf.concat(concat_dim=1, values=[z, y])
+        inputs = tf.concat([z, y], 1)
         # Далд давхарга
         h1     = tf.layers.dense(inputs, n_units, activation=None)
         # Leaky ReLU
@@ -55,7 +55,7 @@ def discriminator(
     alpha=0.01   # leaky ReLU-д авах утга
     ):
     with tf.variable_scope('discriminator', reuse=reuse):
-        inputs = tf.concat(concat_dim=1, values=[x, y])
+        inputs = tf.concat([x, y], 1)
         # Далд давхарга
         h1     = tf.layers.dense(x, n_units, activation=None)
         # Leaky ReLU
@@ -165,11 +165,12 @@ with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for e in range(epochs):
         for ii in range(mnist.train.num_examples//batch_size):
-            batch, batch_y = mnist.train.next_batch(batch_size)
+            batch = mnist.train.next_batch(batch_size)
             
             # Зурагнууд аваад reshape rescale хийгээд D рүү дамжуулах
             batch_images  = batch[0].reshape((batch_size, 784))
             batch_images  = batch_images*2 - 1
+            batch_y       = batch[1]
             
             # G-д зориулж random noise дээжлэн авах
             batch_z = np.random.uniform(-1, 1, size=(batch_size, z_size))
@@ -190,8 +191,17 @@ with tf.Session() as sess:
                 })
         
         # epoch болгоны дараа loss утгуудыг авч хэвлэж харах
-        train_loss_d = sess.run(d_loss, {input_z: batch_z, input_real: batch_images})
-        train_loss_g = g_loss.eval({input_z: batch_z})
+        train_loss_d = sess.run(
+            d_loss, 
+            {
+                input_z    : batch_z, 
+                input_real : batch_images,
+                input_y    : batch_y
+            })
+        train_loss_g = g_loss.eval({
+            input_z : batch_z,
+            input_y : batch_y
+            })
             
         print("Epoch {}/{}...".format(e+1, epochs),
               "Discriminator Loss: {:.4f}...".format(train_loss_d),
@@ -200,15 +210,21 @@ with tf.Session() as sess:
         losses.append((train_loss_d, train_loss_g))
         
         # Сургасны дараа хадгалах зорилгоор generator-оос дээж авч хадгалах 
-        sample_z = np.random.uniform(-1, 1, size=(16, z_size))
-        gen_samples = sess.run(
-                       generator(input_z, input_size, reuse=True),
-                       feed_dict={input_z: sample_z})
-        samples.append(gen_samples)
+        #sample_z = np.random.uniform(-1, 1, size=(16, z_size))
+        #gen_samples = sess.run(
+        #                generator(
+        #                    input_z   , 
+        #                    input_y   , 
+        #                    input_size, 
+        #                    reuse=True
+        #                ),
+        #                feed_dict={input_z: sample_z}
+        #            )
+        #samples.append(gen_samples)
         saver.save(sess, './checkpoints/generator.ckpt')
 
 # Сургалтаар үүсгэсэн дээжүүийг хадгалж авах
-with open('train_samples.pkl', 'wb') as f:
-    pkl.dump(samples, f)
+#with open('train_samples.pkl', 'wb') as f:
+#    pkl.dump(samples, f)
 
 
