@@ -21,10 +21,11 @@ args = parser.parse_args()
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('MNIST_data')
 
-def model_inputs(real_dim, z_dim):
+def model_inputs(real_dim, z_dim, y_dim):
     inputs_real = tf.placeholder(tf.float32, (None, real_dim), name="inputs_real")
-    inputs_z = tf.placeholder(tf.float32, (None, z_dim), name="inputs_z")
-    return inputs_real, inputs_z
+    inputs_z    = tf.placeholder(tf.float32, (None, z_dim   ), name="inputs_z"   )
+    inputs_y    = tf.placeholder(tf.float32, (None, y_dim   ), name="inputs_y"   ) # condition
+    return inputs_real, inputs_z, inputs_y
 
 def generator(
     z,           # generator-т авах оролтын тензор
@@ -62,6 +63,7 @@ def discriminator(
 # discriminator-т орж ирэх оролтын зургийн хэмжээ
 input_size    = 784  # 28x28 хэмжээтэй MNIST зургийг нэг мөрөнд оруулсан байдал
 z_size        = 100  # generator-т орж ирэх latent векторын хэмжээ
+y_size        = 10   # condition label-ийн хэмжээ, 10-н янзын цифрүүд байгаа
 g_hidden_size = 128  # generator доторхи далд давхаргуудын хэмжээ
 d_hidden_size = 128  # discriminator доторхи далд давхаргуудын хэмжээ
 alpha         = 0.01 # Leak factor for leaky ReLU
@@ -69,7 +71,7 @@ smooth        = 0.1  # Label smoothing
 
 tf.reset_default_graph()
 # Графын оролтын laceholder-ууд
-input_real, input_z = model_inputs(input_size, z_size)
+input_real, input_z, input_y = model_inputs(input_size, z_size, y_size)
 
 # Generator сүлжээ
 # g_model нь generator-ийн гаралт
