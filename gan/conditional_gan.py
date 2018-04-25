@@ -4,14 +4,14 @@ MNIST шиг харагддаг зурагнуудыг үүсгэж сургах
 тухайн label-тэй тохирох зурагнуудыг үүсгэж сургах
 """
 
+import argparse
+import sys
+import time
 import pickle as pkl
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib import animation
-import argparse
-import sys
-import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--show', help='foo help')
@@ -20,6 +20,9 @@ args = parser.parse_args()
 
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+
+def convert_to_onehot(number_list, class_size):
+    return np.eye(class_size)[number_list.reshape(-1)]
 
 def model_inputs(real_dim, z_dim, y_dim):
     inputs_real = tf.placeholder(tf.float32, (None, real_dim), name="inputs_real") # real input
@@ -142,17 +145,26 @@ def view_samples(epoch, samples):
     return fig, axes
     
 if args.show:
-	saver = tf.train.Saver(var_list=g_vars)
-	with tf.Session() as sess:
-	    saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
-	    for i in range(3):
-	        sample_z = np.random.uniform(-1, 1, size=(16, z_size))
-	        gen_samples = sess.run(
-	                   generator(input_z, input_size, reuse=True),
-	                   feed_dict={input_z: sample_z})
-	        _ = view_samples(0, [gen_samples])
-	        plt.show()
-	sys.exit()
+    saver = tf.train.Saver(var_list=g_vars)
+    with tf.Session() as sess:
+        saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
+        for i in range(3):
+            sample_z    = np.random.uniform(-1, 1, size=(16, z_size))
+            condition_y = convert_to_onehot(np.array([i] * 16), y_size)
+            gen_samples = sess.run(
+                        generator(
+                            input_z,
+                            input_y, 
+                            input_size, 
+                            reuse=True
+                        ),
+                        feed_dict={
+                            input_z : sample_z,
+                            input_y : condition_y
+                        })
+            _ = view_samples(0, [gen_samples])
+            plt.show()
+    sys.exit()
 
 
 batch_size = 100
