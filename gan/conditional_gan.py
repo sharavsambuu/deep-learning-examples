@@ -22,42 +22,47 @@ from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('MNIST_data')
 
 def model_inputs(real_dim, z_dim, y_dim):
-    inputs_real = tf.placeholder(tf.float32, (None, real_dim), name="inputs_real")
-    inputs_z    = tf.placeholder(tf.float32, (None, z_dim   ), name="inputs_z"   )
+    inputs_real = tf.placeholder(tf.float32, (None, real_dim), name="inputs_real") # real input
+    inputs_z    = tf.placeholder(tf.float32, (None, z_dim   ), name="inputs_z"   ) # latent 
     inputs_y    = tf.placeholder(tf.float32, (None, y_dim   ), name="inputs_y"   ) # condition
     return inputs_real, inputs_z, inputs_y
 
 def generator(
     z,           # generator-т авах оролтын тензор
+    y,           # generator-т авах condition тензор
     out_dim,     # generator-ийн гаралтын утгын хэлбэр
     n_units=128, # далд давхарга дахь нуугдмал юнитуудын тоо
     reuse=False, # tf.variable_scope доторхи хувьсагчийг дахин хэрэглэх эсэх
     alpha=0.01   # leaky ReLU-ийн авах утга
     ):
     with tf.variable_scope('generator', reuse=reuse):
+        # latent тензор болон condition хоёрыг нэгтгэж нэг тензор болгох
+        inputs = tf.concat(concat_dim=1, values=[z, y])
         # Далд давхарга
-        h1 = tf.layers.dense(z, n_units, activation=None)
+        h1     = tf.layers.dense(inputs, n_units, activation=None)
         # Leaky ReLU
-        h1 = tf.maximum(h1, alpha*h1) 
+        h1     = tf.maximum(h1, alpha*h1) 
         # Logit болон tanh гаралт
         logits = tf.layers.dense(h1, out_dim, activation=None)
-        out = tf.nn.tanh(logits)
+        out    = tf.nn.tanh(logits)
         return out, logits
 
 def discriminator(
-    x,           # disriminator-т авах оролтын тензор
+    x,           # discriminator-т авах оролтын тензор
+    y,           # discriminator-т бас condition тензор авах ёстой
     n_units=128, # далд давхаргын юнитуудын тоо
     reuse=False, # дахин хэрэглэх эсэх
     alpha=0.01   # leaky ReLU-д авах утга
     ):
     with tf.variable_scope('discriminator', reuse=reuse):
+        inputs = tf.concat(concat_dim=1, values=[x, y])
         # Далд давхарга
-        h1 = tf.layers.dense(x, n_units, activation=None)
+        h1     = tf.layers.dense(x, n_units, activation=None)
         # Leaky ReLU
-        h1 = tf.maximum(h1, alpha*h1)
+        h1     = tf.maximum(h1, alpha*h1)
         # Logit-ууд болон sigmoid
         logits = tf.layers.dense(h1, 1, activation=None)
-        out = tf.nn.sigmoid(logits)
+        out    = tf.nn.sigmoid(logits)
         return out, logits
 
 # discriminator-т орж ирэх оролтын зургийн хэмжээ
@@ -75,12 +80,32 @@ input_real, input_z, input_y = model_inputs(input_size, z_size, y_size)
 
 # Generator сүлжээ
 # g_model нь generator-ийн гаралт
-g_model, g_logits   = generator(input_z, input_size, g_hidden_size, reuse=False,  alpha=alpha)
+g_model, g_logits   = generator(
+    input_z      ,
+    input_y      , 
+    input_size   , 
+    g_hidden_size, 
+    reuse=False  ,  
+    alpha=alpha
+    )
 
 
 # Disriminator сүлжээ
-d_model_real, d_logits_real = discriminator(input_real, d_hidden_size, reuse=False, alpha=alpha)
-d_model_fake, d_logits_fake = discriminator(g_model, d_hidden_size, reuse=True, alpha=alpha)
+d_model_real, d_logits_real = discriminator(
+    input_real   ,
+    input_y
+    d_hidden_size, 
+    reuse=False  , 
+    alpha=alpha
+    )
+
+d_model_fake, d_logits_fake = discriminator(
+    g_model      ,
+    input_y      , 
+    d_hidden_size, 
+    reuse=True   , 
+    alpha=alpha
+    )
 
 
 # loss-ууд тооцох
