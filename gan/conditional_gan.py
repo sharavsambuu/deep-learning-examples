@@ -222,21 +222,25 @@ with tf.Session() as sess:
         losses.append((train_loss_d, train_loss_g))
         
         # Сургасны дараа хадгалах зорилгоор generator-оос дээж авч хадгалах 
-        #sample_z = np.random.uniform(-1, 1, size=(16, z_size))
-        #gen_samples = sess.run(
-        #                generator(
-        #                    input_z   , 
-        #                    input_y   , 
-        #                    input_size, 
-        #                    reuse=True
-        #                ),
-        #                feed_dict={input_z: sample_z}
-        #            )
-        #samples.append(gen_samples)
+        sample_z    = np.random.uniform(-1, 1, size=(10, z_size))
+        condition_y = convert_to_onehot(np.arange(0, 10, 1), y_size)
+        gen_samples = sess.run(
+                        generator(
+                            input_z   , 
+                            input_y   , 
+                            input_size, 
+                            reuse=True
+                        ),
+                        feed_dict={
+                            input_z: sample_z,
+
+                        }
+                    )
+        samples.append(gen_samples)
         saver.save(sess, './checkpoints/generator.ckpt')
 
 # Сургалтаар үүсгэсэн дээжүүийг хадгалж авах
-#with open('train_samples.pkl', 'wb') as f:
-#    pkl.dump(samples, f)
+with open('train_samples.pkl', 'wb') as f:
+    pkl.dump(samples, f)
 
 
