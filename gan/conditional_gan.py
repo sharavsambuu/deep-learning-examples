@@ -80,7 +80,7 @@ input_real, input_z, input_y = model_inputs(input_size, z_size, y_size)
 
 # Generator сүлжээ
 # g_model нь generator-ийн гаралт
-g_model, g_logits   = generator(
+g_model, g_logits = generator(
     input_z      ,
     input_y      , 
     input_size   , 
@@ -89,11 +89,10 @@ g_model, g_logits   = generator(
     alpha=alpha
     )
 
-
 # Disriminator сүлжээ
 d_model_real, d_logits_real = discriminator(
     input_real   ,
-    input_y
+    input_y      ,
     d_hidden_size, 
     reuse=False  , 
     alpha=alpha
@@ -166,18 +165,29 @@ with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for e in range(epochs):
         for ii in range(mnist.train.num_examples//batch_size):
-            batch        = mnist.train.next_batch(batch_size)
+            batch, batch_y = mnist.train.next_batch(batch_size)
             
             # Зурагнууд аваад reshape rescale хийгээд D рүү дамжуулах
-            batch_images = batch[0].reshape((batch_size, 784))
-            batch_images = batch_images*2 - 1
+            batch_images  = batch[0].reshape((batch_size, 784))
+            batch_images  = batch_images*2 - 1
             
             # G-д зориулж random noise дээжлэн авах
             batch_z = np.random.uniform(-1, 1, size=(batch_size, z_size))
             
             # optimizer-уудыг ажиллуулах
-            _ = sess.run(d_train_opt, feed_dict={input_real: batch_images, input_z: batch_z})
-            _ = sess.run(g_train_opt, feed_dict={input_z: batch_z})
+            _ = sess.run(
+                d_train_opt, 
+                feed_dict={
+                    input_real : batch_images, 
+                    input_z    : batch_z,
+                    input_y    : batch_y
+                })
+            _ = sess.run(
+                g_train_opt, 
+                feed_dict={
+                    input_z : batch_z,
+                    input_y : batch_y
+                })
         
         # epoch болгоны дараа loss утгуудыг авч хэвлэж харах
         train_loss_d = sess.run(d_loss, {input_z: batch_z, input_real: batch_images})
