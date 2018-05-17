@@ -18,6 +18,7 @@ learning_rate = 0.001
 inputs_  = tf.placeholder(tf.float32, (None, 28, 28, 1), name="input")
 targets_ = tf.placeholder(tf.float32, (None, 28, 28, 1), name="target")
 
+
 # Encoder
 
 # 28x28x1 -> 28x28x16
@@ -36,6 +37,7 @@ encoded  = tf.layers.max_pooling2d(conv3, pool_size=(2,2), strides=(2,2), paddin
 
 
 # Decoder
+
 # 4x4x8 -> 7x7x8
 upsample1 = tf.image.resize_images(encoded, size=(7,7), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 # 7x7x8 -> 7x7x8
@@ -50,7 +52,7 @@ upsample3 = tf.image.resize_images(conv5, size=(28,28), method=tf.image.ResizeMe
 conv6 = tf.layers.conv2d(inputs=upsample3, filters=16, kernel_size=(3,3), padding='same', activation=tf.nn.relu)
 
 # 28x28x16 -> 28x28x1
-logits = tf.layers.conv2d(inputs=conv6, filters=1, kernel_size=(3,3), padding='same', activation=tf.nn.relu)
+logits = tf.layers.conv2d(inputs=conv6, filters=1, kernel_size=(3,3), padding='same', activation=None)
 
 
 decoded = tf.nn.sigmoid(logits)
@@ -74,3 +76,22 @@ for e in range(epochs):
         noisy_imgs = np.clip(noisy_imgs, 0., 1.)
         batch_cost, _ = sess.run([cost, opt], feed_dict={inputs_: noisy_imgs, targets_: imgs})
         print("Epochs: {}/{}".format(e+1, epochs), " loss: {:.4f}".format(batch_cost))
+
+print("Training is done.")
+print("Checking result :")
+
+fig, axes = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(20,4))
+in_imgs = mnist.test.images[:10]
+noisy_imgs = in_imgs + noise_factor * np.random.randn(*in_imgs.shape)
+noisy_imgs = np.clip(noisy_imgs, 0., 1.)
+
+reconstructed = sess.run(decoded, feed_dict={inputs_: noisy_imgs.reshape((10, 28, 28, 1))})
+
+for images, row in zip([noisy_imgs, reconstructed], axes):
+    for img, ax in zip(images, row):
+        ax.imshow(img.reshape((28, 28)), cmap='Greys_r')
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+fig.tight_layout(pad=0.1)
+plt.show()
