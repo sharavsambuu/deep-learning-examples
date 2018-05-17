@@ -150,7 +150,7 @@ if args.show:
     saver = tf.train.Saver(var_list=g_vars)
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
-        for i in range(9):
+        for i in range(3):
             sample_z    = np.random.uniform(-1, 1, size=(16, z_size))
             condition_y = convert_to_onehot(np.array([i] * 16), y_size)
             gen_samples = sess.run(
