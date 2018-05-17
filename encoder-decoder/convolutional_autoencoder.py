@@ -61,12 +61,16 @@ opt  = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
 sess = tf.Session()
 
-epochs     = 20
-batch_size = 200
+epochs       = 20
+batch_size   = 200
+noise_factor = 0.5
+
 sess.run(tf.global_variables_initializer())
 for e in range(epochs):
     for ii in range(mnist.train.num_examples//batch_size):
         batch = mnist.train.next_batch(batch_size)
         imgs  = batch[0].reshape((-1,28,28,1))
-        batch_cost, _ = sess.run([cost, opt], feed_dict={inputs_: imgs, targets_: imgs})
-        print("Epochs: {}".format(epochs), " loss: {:.4f}".format(batch_cost))
+        noisy_imgs = imgs + noise_factor*np.random.randn(*imgs.shape)
+        noisy_imgs = np.clip(noisy_imgs, 0., 1.)
+        batch_cost, _ = sess.run([cost, opt], feed_dict={inputs_: noisy_imgs, targets_: imgs})
+        print("Epochs: {}/{}".format(e+1, epochs), " loss: {:.4f}".format(batch_cost))
