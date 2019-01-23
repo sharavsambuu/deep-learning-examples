@@ -234,7 +234,7 @@ while step < n_epochs+1:
 state = resize(env.reset())
 prob, val = sess.run([aprob, value], feed_dict={X: state.reshape(1, 84, 84, 1)})
 
-print('Turn Right: {:4.2f}  Turn Left: {:4.2f}  Move Forward {:4.2f}'.format(prob[0][0],prob[0][2], prob[0][1]))
+print('Turn Right: {:4.2f}  Turn Left: {:4.2f}'.format(prob[0][0],prob[0][1]))
 print('Approximated State Value: {:4.4f}'.format(val[0][0]))
 
 
